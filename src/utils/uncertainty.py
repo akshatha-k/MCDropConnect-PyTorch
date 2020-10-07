@@ -69,20 +69,20 @@ def mcdropout_test(model, testloader, args):
   entropy = []
   total = 0
   correct = 0
-  # for i in range(1, T):
-  outputs, targets = mc_predict(model, testloader, T)
-  # class_preds = np.argmax(outputs, axis=1)
-  # acc.append(accuracy(targets, class_preds))
-  _, predicted = outputs.max(1)
-  total += targets.size(0)
-  correct += predicted.eq(targets).sum().item()
-  acc.append((correct / total))
-  outputs, targets = outputs.cpu().numpy(), targets.cpu().numpy()
-  nll.append(numpy_classification_nll(to_categorical(targets, args.num_classes),
-                                      outputs))
-  entropy.append(np.mean(numpy_entropy(outputs)))
-  logger.info("{} samples - MCDC Accuracy {:.3f} MCDC NLL {:.3f} MCDC Entropy {:.3f}".format(T, acc[-1], nll[-1],
-                                                                                             entropy[-1]))
+  for i in range(1, T):
+    outputs, targets = mc_predict(model, testloader, i)
+    # class_preds = np.argmax(outputs, axis=1)
+    # acc.append(accuracy(targets, class_preds))
+    _, predicted = outputs.max(1)
+    total += targets.size(0)
+    correct += predicted.eq(targets).sum().item()
+    acc.append((correct / total))
+    outputs, targets = outputs.cpu().numpy(), targets.cpu().numpy()
+    nll.append(numpy_classification_nll(to_categorical(targets, args.num_classes),
+                                        outputs))
+    entropy.append(np.mean(numpy_entropy(outputs)))
+    logger.info("{} samples - MCDC Accuracy {:.3f} MCDC NLL {:.3f} MCDC Entropy {:.3f}".format(i, acc[-1], nll[-1],
+                                                                                               entropy[-1]))
 
 
 def uncertainty_test(model, testloader, args):
@@ -90,6 +90,8 @@ def uncertainty_test(model, testloader, args):
   rotation_list = range(0, 180, 10)
   with torch.no_grad():
     for i, (data, target) in enumerate(testloader):
+      if i > 10:
+        break 
       data, target = data.to(device), target.to(device)
       output_list = []
       image_list = []
