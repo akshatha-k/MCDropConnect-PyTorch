@@ -56,6 +56,8 @@ parser.add_argument(
   '--drop_prob', default=0.2, type=float, help='Drop probability')
 parser.add_argument(
   '--manifold_mcdc', default=False, type=bool, help='Use manifold mcdc')
+parser.add_argument(
+  '--target_dataset', default='svhn', type=str, help='Target dataset for ood detection')
 
 parser.add_argument(
   '--output_dir',

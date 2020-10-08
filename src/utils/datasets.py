@@ -30,30 +30,35 @@ def get_data(args):
       transforms.RandomCrops - crops the image at random location
       transforms.HorizontalFlip - randomly flips the image
   """
+  if args.mode == 'ood':
+    dataset = args.target_dataset
+  else:
+    dataset = args.dataset
+
   transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
-    transforms.Normalize(mean[args.dataset], std[args.dataset]),
+    transforms.Normalize(mean[dataset], std[dataset]),
   ])
 
   transform_test = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize(mean[args.dataset], std[args.dataset])
+    transforms.Normalize(mean[dataset], std[dataset])
   ])
   imagenet_transform_train = transforms.Compose([
     transforms.RandomCrop(64, padding=4),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
-    transforms.Normalize(mean[args.dataset], std[args.dataset]),
+    transforms.Normalize(mean[dataset], std[dataset]),
   ])
 
   imagenet_transform_test = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize(mean[args.dataset], std[args.dataset])
+    transforms.Normalize(mean[dataset], std[dataset])
   ])
 
-  if args.dataset == 'mnist':
+  if dataset == 'mnist':
     trainset = torchvision.datasets.MNIST(
       root='./data', train=True, download=True, transform=transforms.ToTensor())
     trainloader = torch.utils.data.DataLoader(
@@ -63,7 +68,7 @@ def get_data(args):
     testloader = torch.utils.data.DataLoader(
       testset, batch_size=100, shuffle=False, num_workers=2)
 
-  if args.dataset == 'cifar10':
+  if dataset == 'cifar10':
     trainset = torchvision.datasets.CIFAR10(
       root='./data', train=True, download=True, transform=transform_train)
     trainloader = torch.utils.data.DataLoader(
@@ -75,19 +80,19 @@ def get_data(args):
       testset, batch_size=100, shuffle=False, num_workers=4)
     args.num_classes = 10
 
-  elif args.dataset == 'svhn':
+  elif dataset == 'svhn':
     trainset = torchvision.datasets.SVHN(
       root='./data', split='train', download=True, transform=transform_train)
     trainloader = torch.utils.data.DataLoader(
       trainset, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
     testset = torchvision.datasets.SVHN(
-      root='./data',split='test', download=True, transform=transform_test)
+      root='./data', split='test', download=True, transform=transform_test)
     testloader = torch.utils.data.DataLoader(
       testset, batch_size=100, shuffle=False, num_workers=4)
     args.num_classes = 10
 
-  elif args.dataset == 'cifar100':
+  elif dataset == 'cifar100':
     trainset = torchvision.datasets.CIFAR100(
       root='./data', train=True, download=True, transform=transform_train)
     trainloader = torch.utils.data.DataLoader(
@@ -99,7 +104,7 @@ def get_data(args):
       testset, batch_size=100, shuffle=False, num_workers=4)
     args.num_classes = 100
 
-  elif args.dataset == 'tiny_imagenet':
+  elif dataset == 'tiny_imagenet':
     data_dir = 'tiny-imagenet-200/'
     num_workers = {'train': 100, 'val': 0, 'test': 0}
     data_transforms = {

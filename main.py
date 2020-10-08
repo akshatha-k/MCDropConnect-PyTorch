@@ -81,6 +81,14 @@ def main():
                                                                  acc))
     mcdropout_test(trainer.model, testloader, args)
     uncertainty_test(trainer.model, testloader, args)
+  elif args.mode == 'ood':
+    logger.info('OOD detection test')
+    target_train, target_test = get_data(args)
+    loss, acc = trainer.test(target_test)
+    logger.info("Target Test Loss: {:.4f} Test Accuracy: {:.4f}".format(loss,
+                                                                 acc))
+    mcdropout_test(trainer.model, target_test, args)
+    uncertainty_test(trainer.model, target_test, args)
 
 
 if __name__ == '__main__':
