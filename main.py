@@ -5,6 +5,8 @@ from src.trainers.dense_trainer import DenseTrainer
 from src.utils.args import get_args
 from src.utils.datasets import get_data
 from src.utils.logger import get_logger
+from src.utils.ood import mcdropout_test as ood_mcd
+from src.utils.ood import uncertainty_test as ood_uncertainty
 from src.utils.uncertainty import mcdropout_test, uncertainty_test
 
 # Get parameters and setup directories, loggers
@@ -86,9 +88,9 @@ def main():
     target_train, target_test = get_data(args)
     loss, acc = trainer.test(target_test)
     logger.info("Target Test Loss: {:.4f} Test Accuracy: {:.4f}".format(loss,
-                                                                 acc))
-    mcdropout_test(trainer.model, target_test, args)
-    uncertainty_test(trainer.model, target_test, args)
+                                                                        acc))
+    ood_mcd(trainer.model, target_test, args)
+    ood_uncertainty(trainer.model, target_test, args)
 
 
 if __name__ == '__main__':
