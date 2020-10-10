@@ -4,6 +4,7 @@ import torch
 from src.trainers.dense_trainer import DenseTrainer
 from src.utils.args import get_args
 from src.utils.datasets import get_data
+from src.utils.flops import add_flops_counting_methods, get_per_layer_flops
 from src.utils.logger import get_logger
 from src.utils.ood import mcdropout_test as ood_mcd
 from src.utils.uncertainty import mcdropout_test, uncertainty_test
@@ -70,17 +71,21 @@ def main():
   # get trainer
   trainer = trainers[args.model_type](args)
   trainer.model = set_drop(trainer.model, args)
+  get_per_layer_flops(trainer.model, trainloader)
+  exit(0)
   if args.mode == 'train':
     logger.info('Starting training')
     model = trainer.train(trainloader, testloader)
     mcdropout_test(model, testloader, args)
     uncertainty_test(trainer.model, testloader, args)
+    get_per_layer_flops(trainer.model, trainloader)
   elif args.mode == 'eval':
     logger.info('Starting evaluation')
     loss, acc = trainer.test(testloader)
     logger.info("Test Loss: {:.4f} Test Accuracy: {:.4f}".format(loss,
                                                                  acc))
     mcdropout_test(trainer.model, testloader, args)
+    get_per_layer_flops(trainer.model, trainloader)
   elif args.mode == 'ood':
     logger.info('OOD detection test')
     target_train, target_test = get_data(args)
@@ -88,6 +93,7 @@ def main():
     logger.info("Target Test Loss: {:.4f} Test Accuracy: {:.4f}".format(loss,
                                                                         acc))
     ood_mcd(trainer.model, target_test, args)
+    get_per_layer_flops(trainer.model, trainloader)
 
 
 if __name__ == '__main__':
