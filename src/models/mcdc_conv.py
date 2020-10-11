@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 from src.layers.dc_layers import DropConnectDense, DropConnectConv
@@ -5,68 +6,55 @@ from src.models.registry import register
 
 
 ####network
+class Swish(nn.Module):
+  def forward(self, input):
+    return (input * torch.sigmoid(input))
 
-class Residual(nn.Module):
-  def __init__(self, in_channel, num_channel, use_conv1x1=False, strides=1):
-    super(Residual, self).__init__()
-    self.relu = nn.ReLU()
-    self.bn1 = nn.BatchNorm2d(in_channel, eps=1e-3)
-    self.conv1 = DropConnectConv(in_channels=in_channel, out_channels=num_channel, kernel_size=3, padding=1,
-                                 stride=strides)
-    self.bn2 = nn.BatchNorm2d(num_channel, eps=1e-3)
-    self.conv2 = DropConnectConv(in_channels=num_channel, out_channels=num_channel, kernel_size=3, padding=1)
-    if use_conv1x1:
-      self.conv3 = DropConnectConv(in_channels=in_channel, out_channels=num_channel, kernel_size=1, stride=strides)
-    else:
-      self.conv3 = None
-
-  def forward(self, x):
-    y = self.conv1(self.relu(self.bn1(x)))
-    y = self.conv2(self.relu(self.bn2(y)))
-    # print (y.shape)
-    if self.conv3:
-      x = self.conv3(x)
-    # print (x.shape)
-    z = y + x
-    return z
-
-
-# blk = Residual(3,3,True)
-# X = Variable(torch.zeros(4, 3, 96, 96))
-# out=blk(X)
-
-def ResNet_block(in_channels, num_channels, num_residuals, first_block=False):
-  layers = []
-  for i in range(num_residuals):
-    if i == 0 and not first_block:
-      layers += [Residual(in_channels, num_channels, use_conv1x1=True, strides=2)]
-    elif i > 0 and not first_block:
-      layers += [Residual(num_channels, num_channels)]
-    else:
-      layers += [Residual(in_channels, num_channels)]
-  blk = nn.Sequential(*layers)
-  return blk
+  def __repr__(self):
+    return self.__class__.__name__ + ' ()'
 
 
 @register
 class mcdc_simplenet(nn.Module):
   def __init__(self, num_classes):
     super(mcdc_simplenet, self).__init__()
-    self.block1 = nn.Sequential(DropConnectConv(in_channels=1, out_channels=64, kernel_size=7, stride=2, padding=3),
-                                nn.BatchNorm2d(64),
-                                nn.ReLU(),
-                                nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
-    self.block2 = nn.Sequential(ResNet_block(64, 64, 2, True),
-                                ResNet_block(64, 128, 2),
-                                ResNet_block(128, 256, 2),
-                                ResNet_block(256, 512, 2))
-    self.block3 = nn.Sequential(nn.AvgPool2d(kernel_size=3))
-    self.Dense = DropConnectDense(512, num_classes)
+
+    self.cnn1 = DropConnectConv(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1)
+    self.bn1 = nn.BatchNorm2d(16)
+    self.swish1 = torch.nn.ReLU()
+    nn.init.xavier_normal(self.cnn1.weight)
+    self.maxpool1 = nn.MaxPool2d(kernel_size=2, stride=1)
+
+    self.cnn2 = DropConnectConv(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
+    self.bn2 = nn.BatchNorm2d(32)
+    self.swish2 = torch.nn.ReLU()
+    nn.init.xavier_normal(self.cnn2.weight)
+    self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+
+    self.cnn3 = DropConnectConv(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
+    self.bn3 = nn.BatchNorm2d(64)
+    self.swish3 = torch.nn.ReLU()
+    nn.init.xavier_normal(self.cnn3.weight)
+    self.maxpool3 = nn.MaxPool2d(kernel_size=2)
+    self.fc1 = DropConnectDense(64 * 6 * 6, num_classes)
+
+    self.softmax = nn.Softmax(dim=1)
 
   def forward(self, x):
-    y = self.block1(x)
-    y = self.block2(y)
-    y = self.block3(y)
-    y = y.view(-1, 512)
-    y = self.Dense(y)
-    return y
+    out = self.cnn1(x)
+    out = self.bn1(out)
+    out = self.swish1(out)
+    out = self.maxpool1(out)
+    out = self.cnn2(out)
+    out = self.bn2(out)
+    out = self.swish2(out)
+    out = self.maxpool2(out)
+    out = self.cnn3(out)
+    out = self.bn3(out)
+    out = self.swish3(out)
+    out = self.maxpool3(out)
+    out = out.view(out.size(0), -1)
+    out = self.fc1(out)
+    out = self.softmax(out)
+
+    return out

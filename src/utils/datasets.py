@@ -82,7 +82,7 @@ def get_data(args):
 
   elif dataset == 'fmnist':
     transform = transforms.Compose(
-      [transforms.Resize(96),
+      [#transforms.Resize(96),
        transforms.ToTensor(),
        transforms.Normalize((0.5,), (0.5,))])
     trainset = torchvision.datasets.FashionMNIST(

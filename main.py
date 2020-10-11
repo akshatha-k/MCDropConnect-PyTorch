@@ -72,7 +72,6 @@ def main():
   trainer = trainers[args.model_type](args)
   trainer.model = set_drop(trainer.model, args)
   get_per_layer_flops(trainer.model, trainloader)
-  exit(0)
   if args.mode == 'train':
     logger.info('Starting training')
     model = trainer.train(trainloader, testloader)
