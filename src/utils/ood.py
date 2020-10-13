@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
+from sklearn.metrics import roc_curve, roc_auc_score
 from torch.autograd import Variable
 
 from src.utils.logger import get_logger
@@ -39,6 +40,19 @@ def accuracy(y_true, y_pred):
 def to_categorical(y, num_classes):
   """ 1-hot encodes a tensor """
   return np.eye(num_classes, dtype='uint8')[y]
+
+
+def compute_roc(data_iod, data_ood):
+  scores = np.concatenate([data_iod, data_ood], axis=0)
+  labels = np.concatenate([np.zeros_like(data_iod), np.ones_like(data_ood)], axis=0)
+
+  # norm_scores = scores - min(scores) / (max(scores) - min(scores))
+  # print("Data {} Labels {}".format(data.shape, labels.shape))
+
+  auc = roc_auc_score(labels, scores)
+  fpr, tpr, threshs = roc_curve(labels, scores, drop_intermediate=True)
+
+  return auc, fpr, tpr, threshs
 
 
 def mc_predict(model, testloader, num_samples=1):
@@ -83,6 +97,23 @@ def mcdropout_test(model, testloader, args):
     entropy.append(np.mean(numpy_entropy(outputs)))
     logger.info("{} samples - MCDC Accuracy {:.3f} MCDC NLL {:.3f} MCDC Entropy {:.3f}".format(i, acc[-1], nll[-1],
                                                                                                entropy[-1]))
+
+
+def get_auc(model, id_loader, ood_loader):
+  model.train()
+  # In distribution
+  outputs, targets = mc_predict(model, id_loader, 25)
+  outputs, targets = outputs.cpu().numpy(), targets.cpu().numpy()
+  id_entropy = np.mean(numpy_entropy(outputs))
+
+  # Out of  distribution
+  outputs, targets = mc_predict(model, ood_loader, 25)
+  outputs, targets = outputs.cpu().numpy(), targets.cpu().numpy()
+  ood_entropy = np.mean(numpy_entropy(outputs))
+
+  auc, fpr, tpr, threshs = compute_roc(id_entropy, ood_entropy)
+
+  return auc, fpr, tpr, threshs
 
 
 def uncertainty_test(model, testloader, args):

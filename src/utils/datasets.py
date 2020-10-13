@@ -27,11 +27,8 @@ def get_data(args):
       transforms.RandomCrops - crops the image at random location
       transforms.HorizontalFlip - randomly flips the image
   """
-  if args.mode == 'ood':
-    dataset = args.target_dataset
-  else:
-    dataset = args.dataset
 
+  dataset = args.dataset
   transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),
@@ -82,9 +79,9 @@ def get_data(args):
 
   elif dataset == 'fmnist':
     transform = transforms.Compose(
-      [#transforms.Resize(96),
-       transforms.ToTensor(),
-       transforms.Normalize((0.5,), (0.5,))])
+      [  # transforms.Resize(96),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))])
     trainset = torchvision.datasets.FashionMNIST(
       root='./data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(

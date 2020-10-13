@@ -5,6 +5,7 @@ __pycache__/
 data
 .idea
 runs
+assets
 
 # C extensions
 *.so
