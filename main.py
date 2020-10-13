@@ -94,7 +94,8 @@ def main():
                                                                         acc))
     ood_mcd(trainer.model, target_test, args)
     auc, tpr, fpr, thresholds = get_auc(trainer.model, testloader, target_test)
-    get_per_layer_flops(trainer.model, trainloader)
+    logger.info('AUC ', auc)
+    #get_per_layer_flops(trainer.model, trainloader)
 
 
 if __name__ == '__main__':

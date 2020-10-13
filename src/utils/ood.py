@@ -10,7 +10,7 @@ from torch.autograd import Variable
 from src.utils.logger import get_logger
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-logger = get_logger(__name__)
+logger = get_logger('auc')
 
 EPSILON = 1e-7
 
@@ -104,12 +104,12 @@ def get_auc(model, id_loader, ood_loader):
   # In distribution
   outputs, targets = mc_predict(model, id_loader, 25)
   outputs, targets = outputs.cpu().numpy(), targets.cpu().numpy()
-  id_entropy = np.mean(numpy_entropy(outputs))
+  id_entropy = numpy_entropy(outputs)
 
   # Out of  distribution
   outputs, targets = mc_predict(model, ood_loader, 25)
   outputs, targets = outputs.cpu().numpy(), targets.cpu().numpy()
-  ood_entropy = np.mean(numpy_entropy(outputs))
+  ood_entropy = numpy_entropy(outputs)
 
   auc, fpr, tpr, threshs = compute_roc(id_entropy, ood_entropy)
 
