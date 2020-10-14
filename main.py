@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
 
 from src.trainers.dense_trainer import DenseTrainer
 from src.utils.args import get_args
@@ -92,9 +93,23 @@ def main():
     loss, acc = trainer.test(target_test)
     logger.info("Target Test Loss: {:.4f} Test Accuracy: {:.4f}".format(loss,
                                                                         acc))
-    ood_mcd(trainer.model, target_test, args)
-    auc, tpr, fpr, thresholds = get_auc(trainer.model, testloader, target_test)
-    logger.info('AUC ', auc)
+    #ood_mcd(trainer.model, target_test, args)
+    auc, fpr, tpr, thresholds, id_entropy, ood_entropy = get_auc(trainer.model, testloader, target_test)
+    # plt.hist(id_entropy, bins=15, density=True, color='green', label='In Distribution')
+    # plt.hist(ood_entropy, bins=15, density=True, color='red', label='Out Distribution')
+    # plt.legend()
+    # plt.savefig('{}/hist'.format(args.output_dir))
+    #logger.info('AUC ', auc)
+    plt.title('Receiver Operating Characteristic')
+    plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % auc)
+    plt.legend(loc='lower right')
+    plt.plot([0, 1], [0, 1], 'r--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.savefig('{}/roc'.format(args.output_dir))
+    exit(0)
     #get_per_layer_flops(trainer.model, trainloader)
 
 

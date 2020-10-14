@@ -113,7 +113,7 @@ def get_auc(model, id_loader, ood_loader):
 
   auc, fpr, tpr, threshs = compute_roc(id_entropy, ood_entropy)
 
-  return auc, fpr, tpr, threshs
+  return auc, fpr, tpr, threshs, id_entropy, ood_entropy
 
 
 def uncertainty_test(model, testloader, args):
